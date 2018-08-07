@@ -731,9 +731,13 @@ class ExponentialSmoothing(TimeSeriesModel):
         sse = sqeuclidean(fitted[:-h - 1], data)
         # (s0 + gamma) + (b0 + beta) + (l0 + alpha) + phi
         k = m * seasoning + 2 * trending + 2 + 1 * damped
-        aic = self.nobs * np.log(sse / self.nobs) + (k) * 2
-        aicc = aic + (2 * (k + 2) * (k + 3)) / (self.nobs - k - 3)
-        bic = self.nobs * np.log(sse / self.nobs) + (k) * np.log(self.nobs)
+        aic = self.nobs * np.log(sse / self.nobs) + k * 2
+        if self.nobs - k - 3 > 0:
+            aicc_penalty = (2 * (k + 2) * (k + 3)) / (self.nobs - k - 3)
+        else:
+            aicc_penalty = np.inf
+        aicc = aic + aicc_penalty
+        bic = self.nobs * np.log(sse / self.nobs) + k * np.log(self.nobs)
         resid = data - fitted[:-h - 1]
         if remove_bias:
             fitted += resid.mean()
